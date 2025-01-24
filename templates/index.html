@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>Куда пойти — Москва глазами Артёма</title>
 
-    {% load static %}  <!-- Загрузка статических тегов -->
+    {% load static %}
 
     <link rel="shortcut icon" href="{% static 'img/favicon.png' %}" type="image/png">
 
@@ -243,12 +243,8 @@
         template: document.getElementById('app-template').innerHTML,
         data: {
             loadingPlaceId: null,
-            selectedPlace: null,  // object with attributes specified below
-            // title
-            // placeId
-            // imgs
-            // short_description
-            // long_description
+            selectedPlace: null,
+
         },
         computed: {
             promptVisible: function () {
@@ -272,14 +268,13 @@
         },
         updated: function () {
             this.$nextTick(function () {
-                // Код, будет запущен только после обновления всех представлений
+
                 $('#place-photos').carousel();
             })
         },
         methods: {
             handlePhotosClick: function (slideId = 'next') {
-                // default event handlers of Bootstrap Carousel conflict with Leaflet
-                // so custom handler will mimic expected carousel behaviour
+
                 $('#place-photos').carousel(slideId);
             }
         },
@@ -304,7 +299,7 @@
             let data = await response.json();
 
             if (sidebarApp.loadingPlaceId != placeId) {
-                // Place loading was cancelled by user
+
                 return
             }
 
