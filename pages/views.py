@@ -1,7 +1,7 @@
 import json
 from django.shortcuts import render
 from .models import Location
-from django.http import HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 
 
@@ -32,7 +32,19 @@ def show_phones(request):
     return render(request, 'index.html', {'geojson_data': json.dumps(geojson_data)})
 
 
-def get_location(request,location_id):
+def get_location(request, location_id):
     location = get_object_or_404(Location, id=location_id)
+    images = location.images.all()
 
-    return HttpResponse(location.title)
+    response_json = {
+        "title": location.title,
+        "imgs": [image.image.url for image in images],
+        "description_short": location.description_short,
+        "description_long": location.description_long,
+        "coordinates": {
+            "lat": location.latitude,
+            "lng": location.longitude,
+        },
+    }
+
+    return JsonResponse(response_json, json_dumps_params={'ensure_ascii': False, 'indent': 4})
