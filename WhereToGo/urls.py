@@ -7,6 +7,7 @@ from django.conf.urls.static import static
 urlpatterns = [
 	path('admin/', admin.site.urls),
 	path('', views.show_phones),
+	path('places/<int:location_id>/', views.get_location),
 ]
 
 if settings.DEBUG:

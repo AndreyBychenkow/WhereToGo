@@ -1,6 +1,8 @@
 import json
 from django.shortcuts import render
 from .models import Location
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 
 
 def create_feature(location):
@@ -8,7 +10,7 @@ def create_feature(location):
         "type": "Feature",
         "geometry": {
             "type": "Point",
-            "coordinates": [ location.latitude, location.longitude],
+            "coordinates": [location.latitude, location.longitude],
         },
         "properties": {
             "title": location.title,
@@ -27,7 +29,10 @@ def show_phones(request):
         "features": dynamic_features,
     }
 
-
-    print(json.dumps(geojson_data, indent=2))
-
     return render(request, 'index.html', {'geojson_data': json.dumps(geojson_data)})
+
+
+def get_location(request,location_id):
+    location = get_object_or_404(Location, id=location_id)
+
+    return HttpResponse(location.title)
