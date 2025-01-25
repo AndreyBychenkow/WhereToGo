@@ -1,8 +1,8 @@
 import json
-from django.shortcuts import render
-from .models import Location
+from django.shortcuts import render, get_object_or_404
+from django.urls import reverse
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
+from .models import Location
 
 
 def create_feature(location):
@@ -10,12 +10,12 @@ def create_feature(location):
         "type": "Feature",
         "geometry": {
             "type": "Point",
-            "coordinates": [location.latitude, location.longitude],
+            "coordinates": [location.longitude, location.latitude],
         },
         "properties": {
             "title": location.title,
             "placeId": location.place_id,
-            "detailsUrl": "/static/places/{}.json".format(location.place_id),
+            "detailsUrl": reverse('get_location', args=[location.id]),
         },
     }
 
