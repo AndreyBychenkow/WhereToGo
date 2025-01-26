@@ -5,7 +5,7 @@ from tinymce import models as tinymce_models
 class Location(models.Model):
     title = models.CharField(max_length=255, verbose_name="Название")
     place_id = models.CharField(max_length=100, unique=True, verbose_name="Идентификатор места")
-    details_url = models.URLField(verbose_name="URL для деталей")
+    details_url = models.URLField(verbose_name="URL для деталей", blank=True, null=True)
     latitude = models.FloatField(blank=True, null=True, verbose_name="Широта")
     longitude = models.FloatField(blank=True, null=True, verbose_name="Долгота")
     description_short = models.TextField(verbose_name="Краткое описание", blank=True, null=True)
