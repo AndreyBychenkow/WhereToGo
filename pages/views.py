@@ -39,8 +39,8 @@ def get_location(request, location_id):
     response_json = {
         "title": location.title,
         "imgs": [image.image.url for image in images],
-        "description_short": location.description_short,
-        "description_long": location.description_long,
+        "description_short": location.short_description,
+        "description_long": location.long_description,
         "coordinates": {
             "lat": location.latitude,
             "lng": location.longitude,
