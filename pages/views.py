@@ -14,7 +14,7 @@ def create_feature(location):
         },
         "properties": {
             "title": location.title,
-            "placeId": location.place_id,
+            "placeId": location.id,
             "detailsUrl": reverse('get_location', args=[location.id]),
         },
     }
