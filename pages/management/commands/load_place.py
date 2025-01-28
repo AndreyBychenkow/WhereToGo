@@ -1,51 +1,61 @@
 import json
 import requests
-import os
+from concurrent.futures import ThreadPoolExecutor
 from django.core.management.base import BaseCommand
 from django.core.files.base import ContentFile
 from pages.models import Location, LocationImage
 
 
 class Command(BaseCommand):
-    help = 'Load places from a JSON file or URL, or from all JSON files in a directory'
+    help = 'Загружает место из JSON по URL в базу данных, включая изображения.'
 
     def add_arguments(self, parser):
-        parser.add_argument('path', type=str, help='Path to the JSON file, URL, or directory')
+        parser.add_argument('url', type=str, help='URL на JSON файл с данными о локации')
 
     def handle(self, *args, **kwargs):
-        path = kwargs['path']
+        url = kwargs['url']
 
-        if os.path.isdir(path):
-            json_files = [f for f in os.listdir(path) if f.endswith('.json')]
-            for json_file in json_files:
-                full_path = os.path.join(path, json_file)
-                self.load_data_from_file(full_path)
-        elif os.path.isfile(path):
-            self.load_data_from_file(path)
-        else:
-            self.stderr.write(self.style.ERROR(f'Path {path} is not a valid file or directory'))
+        self.stdout.write(self.style.SUCCESS(f'Начало загрузки JSON данных с адреса: {url}'))
+
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            self.stdout.write(self.style.SUCCESS('JSON файл успешно загружен.'))
+        except requests.RequestException as e:
+            self.stderr.write(self.style.ERROR(f'Не удалось загрузить JSON данные по URL: {e}'))
             return
 
-    def load_data_from_file(self, file_path):
-        with open(file_path, 'r', encoding='utf-8') as file:
-            data = json.load(file)
+        try:
+            data = response.json()
+        except json.JSONDecodeError:
+            self.stderr.write(self.style.ERROR('Некорректный JSON файл'))
+            return
 
         if isinstance(data, dict):
             data = [data]
 
         if not isinstance(data, list):
-            self.stderr.write(self.style.ERROR('JSON data is not a list'))
+            self.stderr.write(self.style.ERROR('JSON данные не являются списком'))
             return
 
-        for item in data:
+        def process_item(item):
             if not isinstance(item, dict):
-                self.stderr.write(self.style.ERROR('Item in JSON data is not a dictionary'))
-                continue
+                self.stderr.write(self.style.ERROR('Элемент JSON данных не является словарём'))
+                return
 
             title = item.get('title')
-            place_id = item.get('title').replace(" ", "_").lower()
-            latitude = item['coordinates'].get('lat')
-            longitude = item['coordinates'].get('lng')
+            if not title:
+                self.stderr.write(self.style.ERROR('Отсутствует поле "title" в JSON данных'))
+                return
+
+            place_id = title.replace(" ", "_").lower()
+            latitude = item.get('coordinates', {}).get('lat')
+            longitude = item.get('coordinates', {}).get('lng')
+
+            if latitude is None or longitude is None:
+                self.stderr.write(self.style.ERROR(f'Отсутствуют координаты для места: {title}'))
+                return
+
             description_short = item.get('description_short', '')
             description_long = item.get('description_long', '')
 
@@ -60,11 +70,22 @@ class Command(BaseCommand):
                 }
             )
 
-            for img_url in item.get('imgs', []):
-                img_response = requests.get(img_url)
-                if img_response.status_code == 200:
+            def download_image(img_url):
+                try:
+                    img_response = requests.get(img_url, timeout=10)
+                    img_response.raise_for_status()
                     image_file = ContentFile(img_response.content)
                     location_image = LocationImage(location=location)
                     location_image.image.save(img_url.split('/')[-1], image_file)
+                except requests.RequestException as e:
+                    self.stderr.write(self.style.ERROR(f'Не удалось загрузить изображение: {img_url}, ошибка: {e}'))
 
-            self.stdout.write(self.style.SUCCESS(f'Successfully loaded location: {title}'))
+            with ThreadPoolExecutor() as executor:
+                executor.map(download_image, item.get('imgs', []))
+
+            self.stdout.write(self.style.SUCCESS(f'Успешно загружено место: {title}'))
+
+        with ThreadPoolExecutor() as executor:
+            executor.map(process_item, data)
+
+        self.stdout.write(self.style.SUCCESS('Скрипт отработал успешно !'))
