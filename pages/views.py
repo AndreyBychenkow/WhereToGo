@@ -29,7 +29,7 @@ def show_phones(request):
         "features": dynamic_features,
     }
 
-    return render(request, 'index.html', {'geojson_data': json.dumps(geojson_data)})
+    return render(request, 'index.html', {'geojson_data': geojson_data})
 
 
 def get_location(request, location_id):

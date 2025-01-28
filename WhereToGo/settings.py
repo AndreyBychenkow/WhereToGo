@@ -7,11 +7,11 @@ env.read_env()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = env('DJANGO_SECRET_KEY')
+SECRET_KEY = env.str('DJANGO_SECRET_KEY')
 
-DEBUG = env("DJANGO_DEBUG", False)
+DEBUG = env.bool("DJANGO_DEBUG", False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", [".localhost", "127.0.0.1", "[::1]"])
 
 INSTALLED_APPS = [
     'django.contrib.admin',

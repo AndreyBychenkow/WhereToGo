@@ -7,48 +7,27 @@
   {% load static %}
 
   <link rel="shortcut icon" href="{% static 'img/favicon.png' %}" type="image/png">
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-  <link rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css"
-        integrity="sha512-xwE/Az9zrjBIphAcBb3F6JVqxf46+CDLwfLMHloNu6KEQCAWi6HcDUbeOfBIptF7tcCzusKFjFw2yuvEpDL9wQ=="
-        crossorigin="anonymous">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" crossorigin="anonymous">
   <link rel="stylesheet" href="{% static 'css/leaflet-sidebar.css' %}">
-
-  <link rel="stylesheet"
-        href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
-        integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
-        crossorigin="anonymous">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" crossorigin="anonymous">
   <link rel="stylesheet" href="https://unpkg.com/@ansur/leaflet-pulse-icon@0.1.1/dist/L.Icon.Pulse.css">
 
   <style>
-    body {
-      padding: 0;
-      margin: 0;
-    }
-
-    html, body, #map {
-      height: 100%;
-    }
-
-    .place-description img {
-      max-width: 100%;
-    }
-
-    .sidebar-content {
-      padding: 14px 20px;
-      height: 100%;
-    }
-
-    .select-place-prompt {
-      color: red;
-      width: 100px;
-    }
+    body { padding: 0; margin: 0; }
+    html, body, #map { height: 100%; }
+    .place-description img { max-width: 100%; }
+    .sidebar-content { padding: 14px 20px; height: 100%; }
+    .select-place-prompt { color: red; width: 100px; }
   </style>
 
-  <script id="places-geojson" type="application/json">
-    {{ geojson_data|safe }}
+  {{ geojson_data|json_script:"places-geojson" }}
+
+  <script>
+
+    const placesGeojson = JSON.parse(document.getElementById('places-geojson').textContent);
+    console.log(placesGeojson);
   </script>
 
   <script id="app-template" type="text/template">
