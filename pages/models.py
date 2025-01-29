@@ -23,9 +23,7 @@ class LocationImage(models.Model):
     location = models.ForeignKey(
         Location,
         related_name='images',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.CASCADE,
         verbose_name="Связанная локация"
     )
 
