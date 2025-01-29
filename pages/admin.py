@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from adminsortable2.admin import SortableInlineAdminMixin, SortableAdminBase
 from .models import Location, LocationImage
 from tinymce.widgets import TinyMCE
@@ -22,7 +22,7 @@ class LocationImageInline(SortableInlineAdminMixin, admin.TabularInline):
 
     def image_preview(self, obj):
         if obj.image:
-            return mark_safe(f'<img src="{obj.image.url}" style="max-height: 200px;"/>')
+            return format_html('<img src="{}" style="max-height: 200px;"/>', obj.image.url)
         return 'Нет изображения'
 
     image_preview.short_description = 'Превью'
@@ -44,7 +44,7 @@ class LocationImageAdmin(admin.ModelAdmin):
 
     def image_preview(self, obj):
         if obj.image:
-            return mark_safe(f'<img src="{obj.image.url}" style="max-height: 200px;"/>')
+            return format_html('<img src="{}" style="max-height: 100px;"/>', obj.image.url)
         return 'Нет изображения'
 
     image_preview.short_description = 'Превью'
