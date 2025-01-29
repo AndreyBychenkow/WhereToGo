@@ -23,7 +23,7 @@ class LocationImageInline(SortableInlineAdminMixin, admin.TabularInline):
     def image_preview(self, obj):
         if obj.image:
             return mark_safe(f'<img src="{obj.image.url}" style="max-height: 200px;"/>')
-        return "Нет изображения"
+        return 'Нет изображения'
 
     image_preview.short_description = 'Превью'
 
@@ -33,3 +33,18 @@ class LocationAdmin(SortableAdminBase, admin.ModelAdmin):
     form = LocationAdminForm
     list_display = ['title']
     inlines = [LocationImageInline]
+
+@admin.register(LocationImage)
+class LocationImageAdmin(admin.ModelAdmin):
+    list_display = ['image_preview', 'location', 'order']
+    list_filter = ['location']
+    search_fields = ['location__title']
+    readonly_fields = ('image_preview',)
+    raw_id_fields = ('location',)
+
+    def image_preview(self, obj):
+        if obj.image:
+            return mark_safe(f'<img src="{obj.image.url}" style="max-height: 200px;"/>')
+        return 'Нет изображения'
+
+    image_preview.short_description = 'Превью'
