@@ -6,8 +6,8 @@ class Location(models.Model):
     title = models.CharField(max_length=255, verbose_name="Название")
     latitude = models.FloatField(default=0.0, verbose_name="Широта")
     longitude = models.FloatField(default=0.0,verbose_name="Долгота")
-    short_description = models.TextField(verbose_name="Краткое описание", blank=True, null=True)
-    long_description = tinymce_models.HTMLField(verbose_name="Полное описание", blank=True, null=True)
+    short_description = models.TextField(verbose_name="Краткое описание", blank=True, default="")
+    long_description = tinymce_models.HTMLField(verbose_name="Полное описание", blank=True, default="")
 
     class Meta:
         verbose_name = "Локация"
