@@ -7,12 +7,12 @@ env.read_env()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-1wif%f1%o+qb$k%f^v-1d0)ubacaew4u(hq=btpq=z96!+wj81'
 
-DEBUG = env("DJANGO_DEBUG", True)
+SECRET_KEY = env.str('DJANGO_SECRET_KEY')
 
-ALLOWED_HOSTS = ['decebell032.pythonanywhere.com']
+DEBUG = env.bool("DJANGO_DEBUG", False)
 
+ALLOWED_HOSTS = env.list("DEMO_HOST", [".localhost", "'127.0.0.1", "[::1]"])
 
 INSTALLED_APPS = [
     'django.contrib.admin',

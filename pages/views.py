@@ -14,7 +14,7 @@ def create_feature(location):
         },
         "properties": {
             "title": location.title,
-            "placeId": location.place_id,
+            "placeId": location.id,
             "detailsUrl": reverse('get_location', args=[location.id]),
         },
     }
@@ -29,7 +29,7 @@ def show_phones(request):
         "features": dynamic_features,
     }
 
-    return render(request, 'index.html', {'geojson_data': json.dumps(geojson_data)})
+    return render(request, 'index.html', {'geojson_data': geojson_data})
 
 
 def get_location(request, location_id):
@@ -39,8 +39,8 @@ def get_location(request, location_id):
     response_json = {
         "title": location.title,
         "imgs": [image.image.url for image in images],
-        "description_short": location.description_short,
-        "description_long": location.description_long,
+        "description_short": location.short_description,
+        "description_long": location.long_description,
         "coordinates": {
             "lat": location.latitude,
             "lng": location.longitude,

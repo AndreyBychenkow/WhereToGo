@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 from adminsortable2.admin import SortableInlineAdminMixin, SortableAdminBase
 from .models import Location, LocationImage
 from tinymce.widgets import TinyMCE
@@ -22,8 +22,8 @@ class LocationImageInline(SortableInlineAdminMixin, admin.TabularInline):
 
     def image_preview(self, obj):
         if obj.image:
-            return mark_safe(f'<img src="{obj.image.url}" style="max-height: 200px;"/>')
-        return "Нет изображения"
+            return format_html('<img src="{}" style="max-height: 200px; max-width: 200px;"/>', obj.image.url)
+        return 'Нет изображения'
 
     image_preview.short_description = 'Превью'
 
@@ -31,5 +31,20 @@ class LocationImageInline(SortableInlineAdminMixin, admin.TabularInline):
 @admin.register(Location)
 class LocationAdmin(SortableAdminBase, admin.ModelAdmin):
     form = LocationAdminForm
-    list_display = ('title', 'place_id', 'details_url')
+    list_display = ['title']
     inlines = [LocationImageInline]
+
+@admin.register(LocationImage)
+class LocationImageAdmin(admin.ModelAdmin):
+    list_display = ['image_preview', 'location', 'order']
+    list_filter = ['location']
+    search_fields = ['location__title']
+    readonly_fields = ('image_preview',)
+    raw_id_fields = ('location',)
+
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="max-height: 100px; max-width: 150px;"/>', obj.image.url)
+        return 'Нет изображения'
+
+    image_preview.short_description = 'Превью'
