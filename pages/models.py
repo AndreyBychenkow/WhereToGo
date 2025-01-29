@@ -19,7 +19,7 @@ class Location(models.Model):
 
 class LocationImage(models.Model):
     image = models.ImageField(verbose_name="Изображение")
-    order = models.PositiveIntegerField(default=0, verbose_name="Порядок")
+    order = models.PositiveIntegerField(default=0, verbose_name="Порядок", db_index=True)
     location = models.ForeignKey(
         Location,
         related_name='images',
