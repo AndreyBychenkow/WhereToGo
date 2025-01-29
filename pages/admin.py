@@ -22,7 +22,7 @@ class LocationImageInline(SortableInlineAdminMixin, admin.TabularInline):
 
     def image_preview(self, obj):
         if obj.image:
-            return format_html('<img src="{}" style="max-height: 200px;"/>', obj.image.url)
+            return format_html('<img src="{}" style="max-height: 200px; max-width: 200px;"/>', obj.image.url)
         return 'Нет изображения'
 
     image_preview.short_description = 'Превью'
@@ -44,7 +44,7 @@ class LocationImageAdmin(admin.ModelAdmin):
 
     def image_preview(self, obj):
         if obj.image:
-            return format_html('<img src="{}" style="max-height: 100px;"/>', obj.image.url)
+            return format_html('<img src="{}" style="max-height: 100px; max-width: 150px;"/>', obj.image.url)
         return 'Нет изображения'
 
     image_preview.short_description = 'Превью'
