@@ -21,7 +21,7 @@ def create_feature(location):
 
 
 def show_phones(request):
-    locations = Location.objects.all()
+    locations = Location.objects.prefetch_related('images').all()
     dynamic_features = [create_feature(location) for location in locations]
 
     geojson_data = {
@@ -33,7 +33,7 @@ def show_phones(request):
 
 
 def get_location(request, location_id):
-    location = get_object_or_404(Location, id=location_id)
+    location = get_object_or_404(Location.objects.prefetch_related('images'), id=location_id)
     images = location.images.all()
 
     response_json = {
