@@ -6,15 +6,15 @@ from .models import Location
 
 def create_feature(location):
     return {
-        "type": "Feature",
-        "geometry": {
-            "type": "Point",
-            "coordinates": [location.longitude, location.latitude],
+        'type': 'Feature',
+        'geometry': {
+            'type': 'Point',
+            'coordinates': [location.longitude, location.latitude],
         },
-        "properties": {
-            "title": location.title,
-            "placeId": location.id,
-            "detailsUrl": reverse('get_location', args=[location.id]),
+        'properties': {
+            'title': location.title,
+            'placeId': location.id,
+            'detailsUrl': reverse('get_location', args=[location.id]),
         },
     }
 
@@ -24,8 +24,8 @@ def show_phones(request):
     dynamic_features = [create_feature(location) for location in locations]
 
     geojson_data = {
-        "type": "FeatureCollection",
-        "features": dynamic_features,
+        'type': 'FeatureCollection',
+        'features': dynamic_features,
     }
 
     return render(request, 'index.html', {'geojson_data': geojson_data})
@@ -39,13 +39,13 @@ def get_location(request, location_id):
     images = location.images.all()
 
     response_json = {
-        "title": location.title,
-        "imgs": [image.image.url for image in images],
-        "description_short": location.short_description,
-        "description_long": location.long_description,
-        "coordinates": {
-            "lat": location.latitude,
-            "lng": location.longitude,
+        'title': location.title,
+        'imgs': [image.image.url for image in images],
+        'description_short': location.short_description,
+        'description_long': location.long_description,
+        'coordinates': {
+            'lat': location.latitude,
+            'lng': location.longitude,
         },
     }
 
