@@ -3,7 +3,8 @@ import requests
 
 from django.core.management.base import BaseCommand
 from django.core.files.base import ContentFile
-from django.db import IntegrityError, MultipleObjectsReturned
+from django.db import IntegrityError
+from django.core.exceptions import MultipleObjectsReturned
 from pages.models import Location, LocationImage
 
 
