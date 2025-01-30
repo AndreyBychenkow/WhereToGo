@@ -3,6 +3,7 @@ import requests
 
 from django.core.management.base import BaseCommand
 from django.core.files.base import ContentFile
+from django.db import IntegrityError, MultipleObjectsReturned
 from pages.models import Location, LocationImage
 
 
@@ -19,17 +20,17 @@ class Command(BaseCommand):
         try:
             response = requests.get(url, timeout=10)
             response.raise_for_status()
-            data = response.json()
+            answer_json_data = response.json()
             self.stdout.write(self.style.SUCCESS(
                 'JSON файл успешно загружен.'))
         except (requests.RequestException, json.JSONDecodeError) as e:
             self.stderr.write(self.style.ERROR(f'Ошибка: {e}'))
             return
 
-        if isinstance(data, dict):
-            data = [data]
+        if isinstance(answer_json_data, dict):
+            answer_json_data = [answer_json_data]
 
-        for item in data:
+        for item in answer_json_data:
             if not isinstance(item, dict):
                 self.stderr.write(self.style.ERROR(
                     'Элемент JSON данных не является словарём'))
@@ -50,31 +51,33 @@ class Command(BaseCommand):
                     f'Отсутствуют координаты для места: {title}'))
                 continue
 
-            location, _ = Location.objects.get_or_create(
-                title=title,
-                defaults={
-                    'latitude': latitude,
-                    'longitude': longitude,
-                    'description_short': item.get('description_short', ''),
-                    'description_long': item.get('description_long', ''),
-                }
-            )
+            try:
+                location, created = Location.objects.get_or_create(
+                    title=title,
+                    defaults={
+                        'latitude': latitude,
+                        'longitude': longitude,
+                        'short_description': item.get('short_description', ''),
+                        'long_description': item.get('long_description', ''),
+                    }
+                )
+            except MultipleObjectsReturned:
+                self.stderr.write(self.style.ERROR(
+                    f'Обнаружено несколько мест с заголовком "{title}".'))
+                continue
+            except IntegrityError:
+                self.stderr.write(self.style.ERROR(
+                    f'Ошибка целостности данных при создании места: {title}.'))
+                continue
 
             for img_url in item.get('imgs', []):
-                self.download_image(img_url, location)
+                LocationImage.objects.create(
+                    location=location,
+                    image=ContentFile(requests.get(
+                        img_url).content, name=img_url.split('/')[-1])
+                )
 
             self.stdout.write(self.style.SUCCESS(
                 f'Успешно загружено место: {title}'))
 
         self.stdout.write(self.style.SUCCESS('Скрипт отработал успешно!'))
-
-    def download_image(self, img_url, location):
-        try:
-            img_response = requests.get(img_url, timeout=10)
-            img_response.raise_for_status()
-            image_file = ContentFile(img_response.content)
-            location_image = LocationImage(location=location)
-            location_image.image.save(img_url.split('/')[-1], image_file)
-        except requests.RequestException as e:
-            self.stderr.write(self.style.ERROR(
-                f'Не удалось загрузить изображение: {img_url}, ошибка: {e}'))
