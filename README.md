@@ -104,7 +104,7 @@ STATIC_ROOT='/path/to/static/
 Затем нужно скопировать нужный url и вставить в скрипт.
 
 ```bash
-   python manage.py load_place <(http://адрес/файла.json)>   
+   python manage.py load_place <http://адрес/файла.json>   
 ```
 В терминале вашей ide отобразится процесс добавления новой локации на карту:
 
