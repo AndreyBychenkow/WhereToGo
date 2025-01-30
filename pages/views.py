@@ -33,7 +33,10 @@ def show_phones(request):
 
 
 def get_location(request, location_id):
-    location = get_object_or_404(Location.objects.prefetch_related('images'), id=location_id)
+    location = get_object_or_404(
+        Location.objects.prefetch_related('images'),
+        id=location_id
+    )
     images = location.images.all()
 
     response_json = {
@@ -47,4 +50,7 @@ def get_location(request, location_id):
         },
     }
 
-    return JsonResponse(response_json, json_dumps_params={'ensure_ascii': False, 'indent': 4})
+    return JsonResponse(
+        response_json,
+        json_dumps_params={'ensure_ascii': False, 'indent': 4}
+    )
