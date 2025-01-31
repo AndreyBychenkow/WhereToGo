@@ -12,7 +12,7 @@ SECRET_KEY = env.str('SECRET_KEY')
 
 DEBUG = env.bool('DEBUG',True)
 
-ALLOWED_HOSTS = ['decebell032.pythonanywhere.com', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = env.list("DEMO_HOST", [".localhost", "127.0.0.1", "[::1]"])
 
 
 INSTALLED_APPS = [
