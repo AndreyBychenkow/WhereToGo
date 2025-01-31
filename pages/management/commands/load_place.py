@@ -1,4 +1,5 @@
 import json
+import time
 import requests
 
 from django.core.management.base import BaseCommand
@@ -9,76 +10,108 @@ from pages.models import Location, LocationImage
 
 
 class Command(BaseCommand):
-
     def add_arguments(self, parser):
         parser.add_argument('url', type=str)
 
     def handle(self, *args, **kwargs):
         url = kwargs['url']
-        self.stdout.write(self.style.SUCCESS(
-            f'Начало загрузки JSON данных с адреса: {url}'))
+        self.stdout.write(
+            self.style.SUCCESS(f'Загрузка JSON данных с {url}')
+        )
 
         try:
             response = requests.get(url, timeout=10)
             response.raise_for_status()
-            raw_place = response.json()
-            self.stdout.write(self.style.SUCCESS(
-                'JSON файл успешно загружен.'))
-        except (requests.RequestException, json.JSONDecodeError) as e:
+            places = response.json()
+
+            if isinstance(places, dict):
+                places = [places]
+
+            if not all(isinstance(item, dict) for item in places):
+                raise ValueError('Некорректный формат JSON данных')
+        except (
+                requests.RequestException, json.JSONDecodeError, ValueError
+        ) as e:
             self.stderr.write(self.style.ERROR(f'Ошибка: {e}'))
             return
 
-        if isinstance(raw_place, dict):
-            raw_place = [raw_place]
-
-        for item in raw_place:
-            if not isinstance(item, dict):
-                self.stderr.write(self.style.ERROR(
-                    'Элемент JSON данных не является словарём'))
-                continue
-
+        for item in places:
             title = item.get('title')
-            if not title:
-                self.stderr.write(self.style.ERROR(
-                    'Отсутствует поле "title" в JSON данных'))
-                continue
-
             coordinates = item.get('coordinates', {})
             latitude = coordinates.get('lat')
             longitude = coordinates.get('lng')
 
-            if latitude is None or longitude is None:
-                self.stderr.write(self.style.ERROR(
-                    f'Отсутствуют координаты для места: {title}'))
+            if not title or latitude is None or longitude is None:
+                self.stderr.write(
+                    self.style.ERROR(
+                        f'Пропущены обязательные данные в JSON: {item}'
+                    )
+                )
                 continue
 
             try:
-                location, created = Location.objects.get_or_create(
+                location, _ = Location.objects.get_or_create(
                     title=title,
                     defaults={
                         'latitude': latitude,
                         'longitude': longitude,
                         'short_description': item.get('short_description', ''),
                         'long_description': item.get('long_description', ''),
-                    }
+                    },
                 )
             except MultipleObjectsReturned:
-                self.stderr.write(self.style.ERROR(
-                    f'Обнаружено несколько мест с заголовком "{title}".'))
+                self.stderr.write(
+                    self.style.ERROR(f'Дубликаты мест: "{title}"')
+                )
                 continue
             except IntegrityError:
-                self.stderr.write(self.style.ERROR(
-                    f'Ошибка целостности данных при создании места: {title}.'))
+                self.stderr.write(
+                    self.style.ERROR(f'Ошибка сохранения места: "{title}"')
+                )
                 continue
 
             for img_url in item.get('imgs', []):
-                LocationImage.objects.create(
-                    location=location,
-                    image=ContentFile(requests.get(
-                        img_url).content, name=img_url.split('/')[-1])
-                )
+                attempt = 0
+                while attempt < 3:
+                    try:
+                        img_response = requests.get(img_url, timeout=10)
+                        img_response.raise_for_status()
+                        image_content = img_response.content
 
-            self.stdout.write(self.style.SUCCESS(
-                f'Успешно загружено место: {title}'))
+                        LocationImage.objects.create(
+                            location=location,
+                            image=ContentFile(
+                                image_content,
+                                name=img_url.split('/')[-1],
+                            ),
+                        )
+                        break
+                    except requests.exceptions.HTTPError as e:
+                        self.stderr.write(
+                            self.style.ERROR(
+                                f'Ошибка HTTP при загрузке {img_url}: {e}'
+                            )
+                        )
+                        break
+                    except requests.exceptions.ConnectionError as e:
+                        self.stderr.write(
+                            self.style.ERROR(
+                                f'Проблема соединения {img_url}, попытка '
+                                f'{attempt + 1}: {e}'
+                            )
+                        )
+                        attempt += 1
+                        time.sleep(5)
+                    except requests.RequestException as e:
+                        self.stderr.write(
+                            self.style.ERROR(
+                                f'Ошибка при загрузке изображения {img_url}: {e}'
+                            )
+                        )
+                        break
 
-        self.stdout.write(self.style.SUCCESS('Скрипт отработал успешно!'))
+            self.stdout.write(
+                self.style.SUCCESS(f'Добавлено место: {title}')
+            )
+
+        self.stdout.write(self.style.SUCCESS('Готово!'))
