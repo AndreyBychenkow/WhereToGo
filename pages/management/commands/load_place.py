@@ -21,17 +21,17 @@ class Command(BaseCommand):
         try:
             response = requests.get(url, timeout=10)
             response.raise_for_status()
-            answer_json_data = response.json()
+            raw_place = response.json()
             self.stdout.write(self.style.SUCCESS(
                 'JSON файл успешно загружен.'))
         except (requests.RequestException, json.JSONDecodeError) as e:
             self.stderr.write(self.style.ERROR(f'Ошибка: {e}'))
             return
 
-        if isinstance(answer_json_data, dict):
-            answer_json_data = [answer_json_data]
+        if isinstance(raw_place, dict):
+            raw_place = [raw_place]
 
-        for item in answer_json_data:
+        for item in raw_place:
             if not isinstance(item, dict):
                 self.stderr.write(self.style.ERROR(
                     'Элемент JSON данных не является словарём'))
