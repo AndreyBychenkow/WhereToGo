@@ -11,13 +11,11 @@ from pages.models import Location, LocationImage
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        parser.add_argument('url', type=str)
+        parser.add_argument("url", type=str)
 
     def handle(self, *args, **kwargs):
-        url = kwargs['url']
-        self.stdout.write(
-            self.style.SUCCESS(f'Загрузка JSON данных с {url}')
-        )
+        url = kwargs["url"]
+        self.stdout.write(self.style.SUCCESS(f"Загрузка JSON данных с {url}"))
 
         try:
             response = requests.get(url, timeout=10)
@@ -28,41 +26,44 @@ class Command(BaseCommand):
                 places = [places]
 
             if not all(isinstance(item, dict) for item in places):
-                raise ValueError('Некорректный формат JSON данных')
-        except (
-                requests.RequestException, json.JSONDecodeError, ValueError
-        ) as e:
-            self.stderr.write(self.style.ERROR(f'Ошибка: {e}'))
+                raise ValueError("Некорректный формат JSON данных")
+        except (requests.RequestException, json.JSONDecodeError, ValueError) as e:
+            self.stderr.write(self.style.ERROR(f"Ошибка: {e}"))
             return
 
         for item in places:
-            title = item.get('title')
-            coordinates = item.get('coordinates', {})
-            latitude = coordinates.get('lat')
-            longitude = coordinates.get('lng')
+            title = item.get("title")
+            coordinates = item.get("coordinates", {})
+            latitude = coordinates.get("lat")
+            longitude = coordinates.get("lng")
 
             if not title or latitude is None or longitude is None:
                 self.stderr.write(
-                    self.style.ERROR(
-                        f'Пропущены обязательные данные в JSON: {item}'
-                    )
+                    self.style.ERROR(f"Пропущены обязательные данные в JSON: {item}")
                 )
                 continue
 
             try:
-                location, _ = Location.objects.get_or_create(
+                location, created = Location.objects.get_or_create(
                     title=title,
                     defaults={
-                        'latitude': latitude,
-                        'longitude': longitude,
-                        'short_description': item.get('short_description', ''),
-                        'long_description': item.get('long_description', ''),
+                        "latitude": latitude,
+                        "longitude": longitude,
+                        "short_description": item.get("description_short", ""),
+                        "long_description": item.get("description_long", ""),
                     },
                 )
+
+                if not created:
+                    location.short_description = item.get(
+                        "description_short", location.short_description
+                    )
+                    location.long_description = item.get(
+                        "description_long", location.long_description
+                    )
+                    location.save()
             except MultipleObjectsReturned:
-                self.stderr.write(
-                    self.style.ERROR(f'Дубликаты мест: "{title}"')
-                )
+                self.stderr.write(self.style.ERROR(f'Дубликаты мест: "{title}"'))
                 continue
             except IntegrityError:
                 self.stderr.write(
@@ -70,7 +71,7 @@ class Command(BaseCommand):
                 )
                 continue
 
-            for img_url in item.get('imgs', []):
+            for img_url in item.get("imgs", []):
                 attempt = 0
                 while attempt < 3:
                     try:
@@ -82,22 +83,19 @@ class Command(BaseCommand):
                             location=location,
                             image=ContentFile(
                                 image_content,
-                                name=img_url.split('/')[-1],
+                                name=img_url.split("/")[-1],
                             ),
                         )
                         break
                     except requests.exceptions.HTTPError as e:
                         self.stderr.write(
-                            self.style.ERROR(
-                                f'Ошибка HTTP при загрузке {img_url}: {e}'
-                            )
+                            self.style.ERROR(f"Ошибка HTTP при загрузке {img_url}: {e}")
                         )
                         break
                     except requests.exceptions.ConnectionError as e:
                         self.stderr.write(
                             self.style.ERROR(
-                                f'Проблема соединения {img_url}, попытка '
-                                f'{attempt + 1}: {e}'
+                                f"Проблема соединения {img_url}, попытка {attempt + 1}: {e}"
                             )
                         )
                         attempt += 1
@@ -105,13 +103,11 @@ class Command(BaseCommand):
                     except requests.RequestException as e:
                         self.stderr.write(
                             self.style.ERROR(
-                                f'Ошибка при загрузке изображения {img_url}: {e}'
+                                f"Ошибка при загрузке изображения {img_url}: {e}"
                             )
                         )
                         break
 
-            self.stdout.write(
-                self.style.SUCCESS(f'Добавлено место: {title}')
-            )
+            self.stdout.write(self.style.SUCCESS(f"Добавлено место: {title}"))
 
-        self.stdout.write(self.style.SUCCESS('Готово!'))
+        self.stdout.write(self.style.SUCCESS("Готово!"))
